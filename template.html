@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Napi menü – Debrecen</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍲</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --papir:#F6F7F4; --tinta:#1D2822; --halvany:#66716B; --vonal:#D5DAD3;
+  --paprika:#C23A22; --level:#3D7A4E; --kockas:rgba(194,58,34,.55);
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){
+  :root{ --papir:#141B17; --tinta:#E9EDE9; --halvany:#98A39C; --vonal:#2C3731;
+    --paprika:#E2654C; --level:#7DBB8C; --kockas:rgba(226,101,76,.45); }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--papir);color:var(--tinta);
+  font:400 1rem/1.5 Figtree,system-ui,-apple-system,"Segoe UI",sans-serif;
+  padding-bottom:env(safe-area-inset-bottom,0px)}
+.abrosz{height:calc(22px + env(safe-area-inset-top,0px));
+  background:
+   repeating-linear-gradient(90deg,var(--kockas) 0 11px,transparent 11px 22px),
+   repeating-linear-gradient(0deg,var(--kockas) 0 11px,transparent 11px 22px);}
+main{max-width:40rem;margin:0 auto;padding:1.75rem 1.25rem 3rem}
+h1,h2,h3{font-family:"Bricolage Grotesque",Figtree,system-ui,sans-serif;margin:0}
+.fejlec h1{font-size:clamp(2rem,8vw,3rem);font-weight:800;line-height:1.05;letter-spacing:-.02em}
+.fejlec p{margin:.4rem 0 0;color:var(--halvany)}
+section{margin-top:2.5rem;padding-top:1.5rem;border-top:3px solid var(--tinta)}
+.etterem h2{font-size:1.6rem;font-weight:800;color:var(--paprika)}
+.info{margin:.15rem 0 0;color:var(--halvany);font-size:.92rem}
+.csoport{margin-top:1.25rem}
+.csoport h3{font-size:1rem;font-weight:600;color:var(--level)}
+.csoportar{font-family:Figtree,system-ui,sans-serif;font-weight:400;font-size:.88rem;color:var(--halvany);margin-left:.35rem}
+ul{list-style:none;margin:.35rem 0 0;padding:0}
+li{display:flex;align-items:baseline;gap:.5rem;padding:.4rem 0;border-bottom:1px solid var(--vonal)}
+.kod{flex:0 0 1.6rem;font-weight:600;color:var(--paprika)}
+.nev{flex:0 1 auto}
+.pont{flex:1 1 1rem;border-bottom:2px dotted var(--vonal);transform:translateY(-.3em)}
+.ar{flex:0 0 auto;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.arak{margin:1rem 0 0;font-size:.9rem;color:var(--halvany)}
+.uzenet{margin:1rem 0 0;padding:.85rem 1rem;border-left:4px solid var(--paprika);background:color-mix(in srgb,var(--paprika) 8%,transparent)}
+.forras{margin:1rem 0 0;display:flex;flex-wrap:wrap;gap:.4rem 1.1rem;font-size:.92rem}
+a{color:var(--tinta);text-decoration-color:var(--paprika);text-underline-offset:3px}
+a[href^="tel"]{white-space:nowrap}
+a:focus-visible{outline:3px solid var(--paprika);outline-offset:2px;border-radius:2px}
+footer{margin-top:3rem;color:var(--halvany);font-size:.85rem}
+</style>
+</head>
+<body>
+<div class="abrosz" aria-hidden="true"></div>
+<main>
+  <div class="fejlec">
+    <h1>{{DATUM}}</h1>
+    <p>Mai ebéd Debrecenben, frissítve {{FRISSITVE}}-kor</p>
+  </div>
+  {{GODOR}}
+  {{CSEKO}}
+  <footer>Az adatok automatikusan jönnek az éttermek oldalairól, ezért előfordulhat eltérés. Rendelés előtt érdemes rákérdezni.</footer>
+</main>
+</body>
+</html>
