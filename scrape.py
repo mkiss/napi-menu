@@ -125,7 +125,18 @@ def godor():
         data = r.json()
     if not data.get("success"):
         raise ValueError("A Gödör szervere hibát jelzett.")
-    return data["menu"]["dates"]
+    napok = data["menu"]["dates"]
+    utvonal = "https://www.godor.hu/" + data.get("data-path", "_data/_menu-order/_product/").lstrip("/")
+    meret = data.get("image-thumb-size", "70x70")
+    for nap in napok.values():
+        groups = nap.get("groups") or {}
+        for g in (groups.values() if isinstance(groups, dict) else groups):
+            for p in (g.get("products") or {}).values():
+                fn, ext = p.get("main-image-filename"), p.get("main-image-extension")
+                if fn and ext:
+                    p["_kep_kicsi"] = f"{utvonal}{fn}{meret}.{ext}"
+                    p["_kep_nagy"] = f"{utvonal}{fn}.{ext}"
+    return napok
 
 
 def godor_nap(napok, nap):
@@ -145,7 +156,8 @@ def godor_nap(napok, nap):
                 continue
             if p.get("is-sold-out-flag"):
                 nev += " (elfogyott)"
-            etelek.append({"kod": kod, "nev": nev, "ar": ""})
+            etelek.append({"kod": kod, "nev": nev, "ar": "",
+                           "kep": p.get("_kep_kicsi"), "kep_nagy": p.get("_kep_nagy")})
         if etelek:
             ar = g.get("normal-price-formatted", "")
             kis = g.get("small-price")
@@ -168,7 +180,12 @@ def sorok(etelek):
     for it in etelek:
         kod = f'<span class="kod">{e(it["kod"])}</span>' if it.get("kod") else ""
         ar = f'<span class="pont"></span><span class="ar">{e(it["ar"])}</span>' if it.get("ar") else ""
-        out.append(f'<li>{kod}<span class="nev">{e(it["nev"])}</span>{ar}</li>')
+        kep = ""
+        if it.get("kep"):
+            kep = (f'<a class="kep" href="{e(it.get("kep_nagy") or it["kep"])}" target="_blank" rel="noopener" '
+                   f'aria-label="Fotó: {e(it["nev"])}"><img src="{e(it["kep"])}" alt="" width="56" height="56" '
+                   f'loading="lazy" referrerpolicy="no-referrer"></a>')
+        out.append(f'<li>{kod}<span class="nev">{e(it["nev"])}</span>{ar}{kep}</li>')
     return "<ul>" + "".join(out) + "</ul>"
 
 
