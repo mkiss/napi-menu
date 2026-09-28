@@ -199,10 +199,10 @@ def godor_html(today, napok, hiba):
     linkek = (f'<p class="forras"><a href="{GODOR_OLDAL}">Rendelés (reggel 9-ig)</a> '
               f'<a href="{GODOR_PDF}">Heti menü (PDF)</a> <a href="{GODOR_JOVO}">Jövő heti menü (PDF)</a></p>')
     if hiba:
-        return f'<section>{fej}<p class="uzenet">A mai menüt nem sikerült betölteni. Nézd meg a rendelő oldalukon.</p>{linkek}</section>'
+        return f'<section>{fej}<p class="uzenet">A menüt nem sikerült betölteni. Nézd meg a rendelő oldalukon.</p>{linkek}</section>'
     csoportok = godor_nap(napok, today)
     if not csoportok:
-        uz = "Hétvégén zárva." if today.weekday() >= 5 else "Ma nincs menü (zárva vagy még nem tették fel)."
+        uz = "Hétvégén zárva." if today.weekday() >= 5 else "Erre a napra nincs menü (zárva vagy még nem tették fel)."
         return f'<section>{fej}<p class="uzenet">{uz}</p>{linkek}</section>'
     body = "".join(
         f'<div class="csoport"><h3>{e(c["nev"])} <span class="csoportar">{e(c["ar"])}</span></h3>{sorok(c["etelek"])}</div>'
@@ -210,24 +210,39 @@ def godor_html(today, napok, hiba):
     return f"<section>{fej}{body}{linkek}</section>"
 
 
-def cseko_html(today, cats, kep, hiba):
+def cseko_html(nap, ma, cats, kep, hiba):
     fej = """<header class="etterem"><h2>Csekő Kávéház</h2>
 <p class="info">Debrecen · kedd–vasárnap 9–20 · <a href="tel:+36302509420">30 250 9420</a></p></header>"""
     linkek = f'<p class="forras"><a href="{CSEKO_NAPI}">Napi kínálat az oldalukon</a> <a href="{e(kep)}">Heti menü (kép)</a></p>'
-    if today.weekday() == 0:
+    if nap.weekday() == 0:
         return f'<section>{fej}<p class="uzenet">Hétfőn zárva.</p>{linkek}</section>'
+    if nap != ma:
+        return (f'<section>{fej}<p class="uzenet">A Csekő csak az aznapi kínálatot teszi ki szövegként. '
+                f'A többi napot a heti menüjükben (kép) nézheted meg.</p>{linkek}</section>')
     if hiba:
         return f'<section>{fej}<p class="uzenet">A mai kínálatot nem sikerült betölteni. Nézd meg az oldalukon.</p>{linkek}</section>'
     body = "".join(blokk(c["nev"], c["etelek"]) for c in cats)
     return f"<section>{fej}{body}{linkek}</section>"
 
 
-def render(today, now, godor_part, cseko_part):
+ROVID = ["H", "K", "Sze", "Cs", "P", "Szo", "V"]
+
+
+def render(ma, now, panelek):
+    """panelek: [(datum, html)] hétfőtől vasárnapig."""
+    tabs, napok = [], []
+    for d, tartalom in panelek:
+        iso = d.isoformat()
+        tabs.append(f'<button type="button" role="tab" class="tab" id="tab-{iso}" data-datum="{iso}" '
+                    f'aria-controls="nap-{iso}" aria-label="{e(datum_hu(d))}">'
+                    f'<span class="tnap">{ROVID[d.weekday()]}</span><span class="tszam">{d.day}</span></button>')
+        napok.append(f'<div class="nap" role="tabpanel" id="nap-{iso}" data-datum="{iso}" aria-labelledby="tab-{iso}">'
+                     f'<h1>{e(datum_hu(d))}</h1>{tartalom}</div>')
     tpl = (ROOT / "template.html").read_text("utf-8")
-    return (tpl.replace("{{DATUM}}", e(datum_hu(today)))
-               .replace("{{FRISSITVE}}", now.strftime("%H:%M"))
-               .replace("{{GODOR}}", godor_part)
-               .replace("{{CSEKO}}", cseko_part))
+    return (tpl.replace("{{FRISSITVE}}", e(f"{HONAPOK[now.month - 1]} {now.day}., {now:%H:%M}"))
+               .replace("{{MA}}", ma.isoformat())
+               .replace("{{TABS}}", "".join(tabs))
+               .replace("{{NAPOK}}", "".join(napok)))
 
 
 def main():
@@ -245,9 +260,11 @@ def main():
         c, c_err = [], ex
         print("Csekő hiba:", ex)
 
-    page = render(today, now,
-                  godor_html(today, g, g_err),
-                  cseko_html(today, c, cseko_heti_kep(), c_err))
+    kep = cseko_heti_kep()
+    hetfo = today - dt.timedelta(days=today.weekday())
+    het = [hetfo + dt.timedelta(days=i) for i in range(7)]
+    page = render(today, now, [
+        (d, godor_html(d, g, g_err) + cseko_html(d, today, c, kep, c_err)) for d in het])
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(page, "utf-8")
     print("Kész:", OUT)

@@ -29,8 +29,19 @@ body{margin:0;background:var(--papir);color:var(--tinta);
    repeating-linear-gradient(0deg,var(--kockas) 0 11px,transparent 11px 22px);}
 main{max-width:40rem;margin:0 auto;padding:1.75rem 1.25rem 3rem}
 h1,h2,h3{font-family:"Bricolage Grotesque",Figtree,system-ui,sans-serif;margin:0}
-.fejlec h1{font-size:clamp(2rem,8vw,3rem);font-weight:800;line-height:1.05;letter-spacing:-.02em}
-.fejlec p{margin:.4rem 0 0;color:var(--halvany)}
+.felirat{margin:0 0 .75rem;color:var(--halvany);font-size:.92rem}
+.napvalaszto{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:.3rem}
+.tab{appearance:none;border:1.5px solid var(--vonal);background:transparent;color:var(--tinta);border-radius:10px;
+  padding:.45rem 0 .5rem;display:flex;flex-direction:column;align-items:center;gap:.1rem;cursor:pointer;font:inherit;position:relative}
+.tnap{font-size:.78rem;color:var(--halvany)}
+.tszam{font-family:"Bricolage Grotesque",Figtree,system-ui,sans-serif;font-weight:800;font-size:1.15rem;line-height:1}
+.tab.ma::after{content:"";position:absolute;bottom:4px;width:5px;height:5px;border-radius:50%;background:var(--paprika)}
+.tab[aria-selected="true"]{background:var(--tinta);border-color:var(--tinta);color:var(--papir)}
+.tab[aria-selected="true"] .tnap{color:var(--papir)}
+.tab:focus-visible{outline:3px solid var(--paprika);outline-offset:2px}
+.nap{margin-top:1.75rem}
+.nap h1{font-size:clamp(1.9rem,7.5vw,2.8rem);font-weight:800;line-height:1.05;letter-spacing:-.02em}
+.nap[hidden]{display:none}
 section{margin-top:2.5rem;padding-top:1.5rem;border-top:3px solid var(--tinta)}
 .etterem h2{font-size:1.6rem;font-weight:800;color:var(--paprika)}
 .info{margin:.15rem 0 0;color:var(--halvany);font-size:.92rem}
@@ -58,12 +69,34 @@ footer{margin-top:3rem;color:var(--halvany);font-size:.85rem}
 <div class="abrosz" aria-hidden="true"></div>
 <main>
   <div class="fejlec">
-    <h1>Szia! {{DATUM}}</h1>
-    <p>Mai ebéd Debrecenben, frissítve {{FRISSITVE}}-kor</p>
+    <p class="felirat">Ebéd Debrecenben</p>
+    <div class="napvalaszto" role="tablist" aria-label="A hét napjai">{{TABS}}</div>
   </div>
-  {{GODOR}}
-  {{CSEKO}}
-  <footer>Az adatok automatikusan jönnek az éttermek oldalairól, ezért előfordulhat eltérés. Rendelés előtt érdemes rákérdezni.</footer>
+  {{NAPOK}}
+  <footer>Frissítve: {{FRISSITVE}}. Az adatok automatikusan jönnek az éttermek oldalairól, ezért előfordulhat eltérés. Rendelés előtt érdemes rákérdezni.</footer>
 </main>
+<script>
+(function(){
+  var tabs=[].slice.call(document.querySelectorAll('.tab'));
+  var napok=[].slice.call(document.querySelectorAll('.nap'));
+  var ma;
+  try{ma=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Budapest'}).format(new Date());}catch(x){ma='{{MA}}';}
+  function valaszt(d,fokusz){
+    tabs.forEach(function(t){var on=t.dataset.datum===d;t.setAttribute('aria-selected',on);t.tabIndex=on?0:-1;if(on&&fokusz)t.focus();});
+    napok.forEach(function(n){n.hidden=n.dataset.datum!==d;});
+  }
+  var van=function(d){return tabs.some(function(t){return t.dataset.datum===d;});};
+  tabs.forEach(function(t,i){
+    if(t.dataset.datum===ma){t.classList.add('ma');t.setAttribute('aria-label',t.getAttribute('aria-label')+' (ma)');}
+    t.addEventListener('click',function(){valaszt(t.dataset.datum);history.replaceState(null,'','#'+t.dataset.datum);});
+    t.addEventListener('keydown',function(ev){
+      var j=ev.key==='ArrowRight'?i+1:ev.key==='ArrowLeft'?i-1:-1;
+      if(j>=0&&j<tabs.length){ev.preventDefault();valaszt(tabs[j].dataset.datum,true);}
+    });
+  });
+  var h=location.hash.slice(1);
+  valaszt(van(h)?h:van(ma)?ma:tabs[0].dataset.datum);
+})();
+</script>
 </body>
 </html>
