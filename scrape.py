@@ -123,6 +123,17 @@ def godor():
                          "offset": "0", "direction": ""})
         r.raise_for_status()
         data = r.json()
+        # Az allergének csak azonosítóval szerepelnek az étlapban; a neveket külön kérjük le.
+        allergenek = {}
+        try:
+            r = s.post(GODOR_XHR, timeout=45,
+                       headers={"x-csrf-token": tok, "X-Requested-With": "XMLHttpRequest",
+                                "Accept": "application/json", "Referer": GODOR_OLDAL},
+                       data={"lang": "hu", "csrfToken": tok, "operation": "get-lang"})
+            r.raise_for_status()
+            allergenek = {str(k): v.get("name", "") for k, v in r.json()["lang"]["allergies"].items()}
+        except Exception as ex:
+            print("Gödör allergén-nevek hiba:", ex)
     if not data.get("success"):
         raise ValueError("A Gödör szervere hibát jelzett.")
     napok = data["menu"]["dates"]
@@ -132,6 +143,7 @@ def godor():
         groups = nap.get("groups") or {}
         for g in (groups.values() if isinstance(groups, dict) else groups):
             for p in (g.get("products") or {}).values():
+                p["_allergenek"] = [allergenek[str(i)] for i in p.get("allergies") or [] if allergenek.get(str(i))]
                 fn, ext = p.get("main-image-filename"), p.get("main-image-extension")
                 if fn and ext:
                     p["_kep_kicsi"] = f"{utvonal}{fn}{meret}.{ext}"
@@ -156,7 +168,7 @@ def godor_nap(napok, nap):
                 continue
             if p.get("is-sold-out-flag"):
                 nev += " (elfogyott)"
-            etelek.append({"kod": kod, "nev": nev, "ar": "",
+            etelek.append({"kod": kod, "nev": nev, "ar": "", "allergenek": p.get("_allergenek") or [],
                            "kep": p.get("_kep_kicsi"), "kep_nagy": p.get("_kep_nagy")})
         if etelek:
             ar = g.get("normal-price-formatted", "")
@@ -185,7 +197,9 @@ def sorok(etelek):
             kep = (f'<a class="kep" href="{e(it.get("kep_nagy") or it["kep"])}" target="_blank" rel="noopener" '
                    f'aria-label="Fotó: {e(it["nev"])}"><img src="{e(it["kep"])}" alt="" width="56" height="56" '
                    f'loading="lazy" referrerpolicy="no-referrer"></a>')
-        out.append(f'<li>{kod}<span class="nev">{e(it["nev"])}</span>{ar}{kep}</li>')
+        alg = (f'<small class="allergen">Allergének: {e(", ".join(it["allergenek"]))}</small>'
+               if it.get("allergenek") else "")
+        out.append(f'<li>{kod}<span class="nev">{e(it["nev"])}{alg}</span>{ar}{kep}</li>')
     return "<ul>" + "".join(out) + "</ul>"
 
 
