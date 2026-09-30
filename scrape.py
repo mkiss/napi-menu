@@ -225,18 +225,22 @@ def cseko_html(nap, ma, cats, kep, hiba, heti=None):
     linkek = f'<p class="forras"><a href="{CSEKO_NAPI}">Napi kínálat az oldalukon</a> <a href="{e(kep)}">Heti menü (kép)</a></p>'
     if nap.weekday() == 0:
         return f'<section>{fej}<p class="uzenet">Hétfőn zárva.</p>{linkek}</section>'
+    etelek = cseko_heti_etelek(heti, nap)
+    fo = ""
+    if etelek:
+        fo = (blokk("Heti menü (főétel)", etelek) +
+              '<p class="info">A főétel a heti menü képéből automatikusan felismerve, '
+              'elírás előfordulhat. Az eredeti kép egy kattintásra van.</p>')
     if nap != ma:
-        etelek = cseko_heti_etelek(heti, nap)
-        if etelek:
-            return (f'<section>{fej}{blokk("Heti menü (főétel)", etelek)}'
-                    f'<p class="info">A heti menü képéből automatikusan felismerve, elírás előfordulhat. '
-                    f'Az eredeti kép egy kattintásra van.</p>{linkek}</section>')
+        if fo:
+            return f'<section>{fej}{fo}{linkek}</section>'
         return (f'<section>{fej}<p class="uzenet">A Csekő csak az aznapi kínálatot teszi ki szövegként. '
                 f'A többi napot a heti menüjükben (kép) nézheted meg.</p>{linkek}</section>')
     if hiba:
-        return f'<section>{fej}<p class="uzenet">A mai kínálatot nem sikerült betölteni. Nézd meg az oldalukon.</p>{linkek}</section>'
+        return (f'<section>{fej}{fo}<p class="uzenet">A mai napi kínálatot nem sikerült betölteni. '
+                f'Nézd meg az oldalukon.</p>{linkek}</section>')
     body = "".join(blokk(c["nev"], c["etelek"]) for c in cats)
-    return f"<section>{fej}{body}{linkek}</section>"
+    return f"<section>{fej}{fo}{body}{linkek}</section>"
 
 
 ROVID = ["H", "K", "Sze", "Cs", "P", "Szo", "V"]
