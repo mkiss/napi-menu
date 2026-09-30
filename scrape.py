@@ -210,13 +210,27 @@ def godor_html(today, napok, hiba):
     return f"<section>{fej}{body}{linkek}</section>"
 
 
-def cseko_html(nap, ma, cats, kep, hiba):
+def cseko_heti_etelek(heti, nap):
+    """A képből kiolvasott A/B menü az adott napra, a scrape.py többi részének formátumában."""
+    d = (heti or {}).get("napok", {}).get(nap.isoformat())
+    if not d:
+        return None
+    arak = heti.get("arak", {})
+    return [{"kod": k, "nev": d[k], "ar": arak.get(k, "")} for k in ("A", "B") if d.get(k)]
+
+
+def cseko_html(nap, ma, cats, kep, hiba, heti=None):
     fej = """<header class="etterem"><h2>Csekő Kávéház</h2>
 <p class="info">Debrecen · kedd–vasárnap 9–20 · <a href="tel:+36302509420">30 250 9420</a></p></header>"""
     linkek = f'<p class="forras"><a href="{CSEKO_NAPI}">Napi kínálat az oldalukon</a> <a href="{e(kep)}">Heti menü (kép)</a></p>'
     if nap.weekday() == 0:
         return f'<section>{fej}<p class="uzenet">Hétfőn zárva.</p>{linkek}</section>'
     if nap != ma:
+        etelek = cseko_heti_etelek(heti, nap)
+        if etelek:
+            return (f'<section>{fej}{blokk("Heti menü (főétel)", etelek)}'
+                    f'<p class="info">A heti menü képéből automatikusan felismerve, elírás előfordulhat. '
+                    f'Az eredeti kép egy kattintásra van.</p>{linkek}</section>')
         return (f'<section>{fej}<p class="uzenet">A Csekő csak az aznapi kínálatot teszi ki szövegként. '
                 f'A többi napot a heti menüjükben (kép) nézheted meg.</p>{linkek}</section>')
     if hiba:
@@ -261,10 +275,17 @@ def main():
         print("Csekő hiba:", ex)
 
     kep = cseko_heti_kep()
+    heti = None
+    if kep != CSEKO_HETI:
+        try:
+            import cseko_kep
+            heti = cseko_kep.beolvas(kep, today)
+        except Exception as ex:
+            print("Csekő heti menü kép hiba:", ex)
     hetfo = today - dt.timedelta(days=today.weekday())
     het = [hetfo + dt.timedelta(days=i) for i in range(7)]
     page = render(today, now, [
-        (d, godor_html(d, g, g_err) + cseko_html(d, today, c, kep, c_err)) for d in het])
+        (d, godor_html(d, g, g_err) + cseko_html(d, today, c, kep, c_err, heti)) for d in het])
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(page, "utf-8")
     print("Kész:", OUT)

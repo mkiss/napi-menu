@@ -22,6 +22,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Tesseract (magyar nyelvi csomaggal)
+        run: sudo apt-get update && sudo apt-get install -y tesseract-ocr tesseract-ocr-hun
       - run: pip install -r requirements.txt
       - run: python scrape.py
       - name: Mentés
