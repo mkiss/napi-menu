@@ -2,8 +2,8 @@ name: Napi menü frissítése
 
 on:
   schedule:
-    # UTC idő! 7:00 és 9:00 UTC = 9:00 és 11:00 nyári időben (télen 8:00 és 10:00)
-    - cron: "0 7,9 * * *"
+  # Magyar idő szerint 1:00, 8:00, 12:00 (téli időszámítás, UTC+1)
+  - cron: "0 0,7,11 * * *"
   workflow_dispatch: {}   # kézi indítás az Actions fülön
 
 permissions:
